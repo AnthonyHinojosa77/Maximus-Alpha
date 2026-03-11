@@ -2,9 +2,11 @@ import type { ProviderId } from '@/types/models'
 import type { AdapterConfig } from './base'
 import { BaseModelAdapter } from './base'
 import { AnthropicAdapter } from './anthropic'
+import { OpenAIAdapter } from './openai'
 
 const ADAPTER_MAP: Record<string, new (config: AdapterConfig) => BaseModelAdapter> = {
   anthropic: AnthropicAdapter,
+  openai: OpenAIAdapter,
 }
 
 export function createAdapter(

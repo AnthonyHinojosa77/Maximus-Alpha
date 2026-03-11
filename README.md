@@ -6,16 +6,17 @@ Multi-model AI decision console. One prompt. Multiple models. Side-by-side compa
 
 MAXIMUS is a localhost-only BYOK prototype. Full functionality requires running the dev server locally. The GitHub Pages deployment is a static showcase only.
 
-### Current Phase: Phase 3 — OpenAI Adapter
+### Current Phase: Phase 4 — Gemini Adapter
 
 ## What Works Right Now
 
 - Themed shell renders locally with retro-futurist terminal aesthetic
 - Claude adapter: real SSE streaming via direct browser CORS
+- OpenAI adapter: real SSE streaming via Vite dev proxy
 - Streaming state visible (STREAMING label, blinking cursor, token-by-token)
 - Latency displayed after completion
 - Abort (per-card STOP + global ABORT ALL) works mid-stream
-- Error handling: invalid key, rate limit, network errors shown in red
+- Error handling: invalid key, rate limit, network errors shown in red per provider
 - In-memory API key entry (keys vanish on tab close)
 - [COPY] button copies response to clipboard
 - GitHub Pages static showcase deploys
@@ -41,7 +42,7 @@ This is not a chatbot wrapper. It is an operator's decision console.
 
 | Provider | Model | Status |
 |----------|-------|--------|
-| OpenAI (ChatGPT) | gpt-4o | Planned |
+| OpenAI (ChatGPT) | gpt-4o | **Working** |
 | Anthropic (Claude) | claude-sonnet-4 | **Working** |
 | Google (Gemini) | gemini-2.0-flash | Planned |
 
@@ -89,20 +90,23 @@ Acceptance criteria:
 - [x] Zero console errors, TypeScript clean, build passes
 
 ### Phase 3: OpenAI Adapter
-Status: In Progress
+Status: **Complete**
+Verified: Real OpenAI streaming end-to-end on localhost
 
 Acceptance criteria:
-- [ ] OpenAI adapter (SSE via Vite proxy)
-- [ ] Streaming text display for ChatGPT
-- [ ] Error handling (invalid key, rate limit)
-- [ ] Verified end-to-end with real OpenAI key
+- [x] OpenAI adapter (SSE via Vite proxy)
+- [x] Streaming text display for ChatGPT
+- [x] Error handling (invalid key, rate limit)
+- [x] Verified end-to-end with real OpenAI key
+- [x] Proxy fix: secure: false for localhost dev SSL compatibility
 
 ### Phase 4: Gemini Adapter
-Status: Not Started
+Status: In Progress
 
 Acceptance criteria:
 - [ ] Gemini adapter (SSE via Vite proxy)
 - [ ] Streaming text display for Gemini
+- [ ] Error handling (invalid key, rate limit)
 - [ ] Verified end-to-end with real Gemini key
 
 ### Phase 5: Error Handling + Abort Polish
