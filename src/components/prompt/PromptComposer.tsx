@@ -3,9 +3,10 @@ import { useState, useRef, useCallback } from 'react'
 interface PromptComposerProps {
   onSubmit: (prompt: string) => void
   disabled?: boolean
+  onAbort?: () => void
 }
 
-export function PromptComposer({ onSubmit, disabled = false }: PromptComposerProps) {
+export function PromptComposer({ onSubmit, disabled = false, onAbort }: PromptComposerProps) {
   const [prompt, setPrompt] = useState('')
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
@@ -44,13 +45,22 @@ export function PromptComposer({ onSubmit, disabled = false }: PromptComposerPro
             className="w-full resize-none bg-transparent text-sm text-terminal-light placeholder-terminal-muted outline-none"
           />
         </div>
-        <button
-          onClick={handleSubmit}
-          disabled={!prompt.trim() || disabled}
-          className="shrink-0 rounded border border-terminal-green bg-terminal-green/10 px-4 py-2 text-xs font-semibold tracking-wider text-terminal-green transition-all hover:bg-terminal-green/20 disabled:cursor-not-allowed disabled:border-terminal-gray disabled:bg-transparent disabled:text-terminal-muted"
-        >
-          {disabled ? 'PROCESSING...' : 'SEND'}
-        </button>
+        {onAbort ? (
+          <button
+            onClick={onAbort}
+            className="shrink-0 rounded border border-terminal-red bg-terminal-red/10 px-4 py-2 text-xs font-semibold tracking-wider text-terminal-red transition-all hover:bg-terminal-red/20"
+          >
+            ■ ABORT ALL
+          </button>
+        ) : (
+          <button
+            onClick={handleSubmit}
+            disabled={!prompt.trim() || disabled}
+            className="shrink-0 rounded border border-terminal-green bg-terminal-green/10 px-4 py-2 text-xs font-semibold tracking-wider text-terminal-green transition-all hover:bg-terminal-green/20 disabled:cursor-not-allowed disabled:border-terminal-gray disabled:bg-transparent disabled:text-terminal-muted"
+          >
+            SEND
+          </button>
+        )}
       </div>
     </div>
   )
