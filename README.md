@@ -6,19 +6,23 @@ Multi-model AI decision console. One prompt. Multiple models. Side-by-side compa
 
 MAXIMUS is a localhost-only BYOK prototype. Full functionality requires running the dev server locally. The GitHub Pages deployment is a static showcase only.
 
-### Current Phase: Phase 4 — Gemini Adapter
+### Current Phase: Phase 5 — Per-Provider Model Selection (Complete)
 
 ## What Works Right Now
 
 - Themed shell renders locally with retro-futurist terminal aesthetic
-- Claude adapter: real SSE streaming via direct browser CORS
-- OpenAI adapter: real SSE streaming via Vite dev proxy
+- **Three providers streaming**: OpenAI (ChatGPT), Claude, and Gemini — all verified end-to-end
+- **Per-provider model selection**: dropdown per provider with multiple model variants
+- Model IDs centralized in a single registry — no hardcoded IDs inside adapter logic
+- Card headers show selected variant (e.g. CHATGPT · GPT-5.4 THINKING, CLAUDE · OPUS 4.6, GEMINI · 3.1 PRO)
+- Thinking/reasoning config passed via `extraBody` mechanism (Claude adaptive thinking, OpenAI reasoning_effort)
 - Streaming state visible (STREAMING label, blinking cursor, token-by-token)
 - Latency displayed after completion
 - Abort (per-card STOP + global ABORT ALL) works mid-stream
 - Error handling: invalid key, rate limit, network errors shown in red per provider
 - In-memory API key entry (keys vanish on tab close)
 - [COPY] button copies response to clipboard
+- Ad-blocker-resistant proxy paths (`/_px/a`, `/_px/b`, etc.)
 - GitHub Pages static showcase deploys
 
 ---
@@ -33,18 +37,19 @@ This is not a chatbot wrapper. It is an operator's decision console.
 
 - **Frontend**: React 18 + TypeScript + Vite
 - **Styling**: Tailwind CSS 4 + custom terminal aesthetic (green-on-black)
-- **State**: Zustand (concurrent streaming)
-- **Storage**: IndexedDB (encrypted API keys, session history)
-- **CORS**: Vite dev proxy (localhost only)
-- **TTS**: Browser-native speechSynthesis
+- **State**: Zustand (concurrent streaming + model selection)
+- **Model Registry**: Centralized `PROVIDERS` config with per-model `extraBody` passthrough
+- **CORS**: Vite dev proxy for OpenAI/Gemini; direct browser CORS for Claude
+- **Storage**: In-memory only (Phase 6 planned: IndexedDB + encryption)
+- **TTS**: Not yet implemented (Phase 8 planned: browser-native speechSynthesis)
 
 ## Alpha Provider Set
 
-| Provider | Model | Status |
-|----------|-------|--------|
-| OpenAI (ChatGPT) | gpt-4o | **Working** |
-| Anthropic (Claude) | claude-sonnet-4 | **Working** |
-| Google (Gemini) | gemini-2.0-flash | Planned |
+| Provider | Models | Default | Status |
+|----------|--------|---------|--------|
+| OpenAI (ChatGPT) | GPT-5.4 Thinking, GPT-5 Mini | GPT-5.4 Thinking | **Working** |
+| Anthropic (Claude) | Opus 4.6, Sonnet 4.6 | Opus 4.6 | **Working** |
+| Google (Gemini) | 3.1 Pro (preview), 3 Flash (preview) | 3.1 Pro | **Working** |
 
 ## Getting Started
 
@@ -64,7 +69,7 @@ npm run dev
 ## Work Log
 
 ### Phase 1: Scaffold + Themed Shell
-Status: Complete  
+Status: Complete
 Verified: Localhost + GitHub Pages shell
 
 Acceptance criteria:
@@ -98,19 +103,32 @@ Acceptance criteria:
 - [x] Streaming text display for ChatGPT
 - [x] Error handling (invalid key, rate limit)
 - [x] Verified end-to-end with real OpenAI key
-- [x] Proxy fix: secure: false for localhost dev SSL compatibility
 
 ### Phase 4: Gemini Adapter
-Status: In Progress
+Status: **Complete**
+Verified: Real Gemini streaming end-to-end on localhost
 
 Acceptance criteria:
-- [ ] Gemini adapter (SSE via Vite proxy)
-- [ ] Streaming text display for Gemini
-- [ ] Error handling (invalid key, rate limit)
-- [ ] Verified end-to-end with real Gemini key
+- [x] Gemini adapter (SSE via Vite proxy)
+- [x] Streaming text display for Gemini
+- [x] Error handling (invalid key, rate limit)
+- [x] Verified end-to-end with real Gemini key
+- [x] Ad-blocker-resistant proxy paths (`/_px/a`, `/_px/b`)
 
-### Phase 5: Error Handling + Abort Polish
-Status: Not Started
+### Phase 5: Per-Provider Model Selection
+Status: **Complete**
+Verified: All three providers streaming with correct models selected via dropdown
+
+Acceptance criteria:
+- [x] Central model registry (`PROVIDERS` array with `ModelVariant[]`)
+- [x] Per-provider model dropdown in API key bar
+- [x] Card headers show provider + selected variant label
+- [x] `extraBody` passthrough for thinking/reasoning config
+- [x] Claude adaptive thinking (`thinking: {type: "adaptive"}`)
+- [x] OpenAI reasoning effort (`reasoning_effort: "high"`)
+- [x] OpenAI uses `max_completion_tokens` (GPT-5 family requirement)
+- [x] No legacy model IDs remain (gemini-2.0-flash removed)
+- [x] Model IDs fully centralized — adapters receive config only
 
 ### Phase 6: BYOK Key Storage + PIN Lock
 Status: Not Started

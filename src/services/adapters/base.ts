@@ -4,6 +4,8 @@ export interface AdapterConfig {
   apiKey: string
   systemPrompt: string
   modelId: string
+  /** Extra params merged into the request body (thinking, reasoning, etc.) */
+  extraBody?: Record<string, unknown>
 }
 
 export abstract class BaseModelAdapter {

@@ -13,34 +13,52 @@ export default defineConfig({
   },
   server: {
     proxy: {
-      '/api/openai': {
+      '/_px/a': {
         target: 'https://api.openai.com',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api\/openai/, ''),
+        rewrite: (p) => p.replace(/^\/_px\/a/, ''),
         secure: false,
+        configure: (proxy) => {
+          proxy.on('error', (_err, _req, res) => {
+            const sr = res as import('http').ServerResponse
+            if (typeof sr.writeHead === 'function' && !sr.headersSent) {
+              sr.writeHead(502, { 'Content-Type': 'application/json' })
+              sr.end(JSON.stringify({ error: { message: 'Proxy connection failed' } }))
+            }
+          })
+        },
       },
-      '/api/gemini': {
+      '/_px/b': {
         target: 'https://generativelanguage.googleapis.com',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api\/gemini/, ''),
+        rewrite: (p) => p.replace(/^\/_px\/b/, ''),
         secure: false,
+        configure: (proxy) => {
+          proxy.on('error', (_err, _req, res) => {
+            const sr = res as import('http').ServerResponse
+            if (typeof sr.writeHead === 'function' && !sr.headersSent) {
+              sr.writeHead(502, { 'Content-Type': 'application/json' })
+              sr.end(JSON.stringify({ error: { message: 'Proxy connection failed' } }))
+            }
+          })
+        },
       },
-      '/api/grok': {
+      '/_px/c': {
         target: 'https://api.x.ai',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api\/grok/, ''),
+        rewrite: (p) => p.replace(/^\/_px\/c/, ''),
         secure: false,
       },
-      '/api/kimi': {
+      '/_px/d': {
         target: 'https://api.moonshot.ai',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api\/kimi/, ''),
+        rewrite: (p) => p.replace(/^\/_px\/d/, ''),
         secure: false,
       },
-      '/api/openrouter': {
+      '/_px/e': {
         target: 'https://openrouter.ai',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api\/openrouter/, ''),
+        rewrite: (p) => p.replace(/^\/_px\/e/, ''),
         secure: false,
       },
     },

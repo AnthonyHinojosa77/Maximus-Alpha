@@ -1,13 +1,13 @@
 import type { StreamCallbacks } from '@/types/models'
 import { BaseModelAdapter } from './base'
 
-export class AnthropicAdapter extends BaseModelAdapter {
+export class GeminiAdapter extends BaseModelAdapter {
   get providerId() {
-    return 'anthropic' as const
+    return 'gemini' as const
   }
 
   get displayName() {
-    return 'Claude'
+    return 'Gemini'
   }
 
   async sendMessage(
@@ -15,50 +15,61 @@ export class AnthropicAdapter extends BaseModelAdapter {
     callbacks: StreamCallbacks,
     signal?: AbortSignal,
   ): Promise<void> {
+    // Gemini uses API key as query param, not Authorization header
+    const url = `/_px/b/v1beta/models/${this.config.modelId}:streamGenerateContent?alt=sse&key=${this.config.apiKey}`
+
     let response: Response
 
     try {
-      response = await fetch('https://api.anthropic.com/v1/messages', {
+      response = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-api-key': this.config.apiKey,
-          'anthropic-version': '2023-06-01',
-          'anthropic-dangerous-direct-browser-access': 'true',
         },
         body: JSON.stringify({
-          model: this.config.modelId,
-          max_tokens: 4096,
-          system: this.config.systemPrompt,
-          stream: true,
-          messages: [{ role: 'user', content: userMessage }],
+          systemInstruction: {
+            parts: [{ text: this.config.systemPrompt }],
+          },
+          contents: [
+            {
+              role: 'user',
+              parts: [{ text: userMessage }],
+            },
+          ],
+          generationConfig: {
+            maxOutputTokens: 4096,
+          },
           ...this.config.extraBody,
         }),
         signal,
       })
     } catch (err) {
-      if (signal?.aborted) {
-        return // Abort is not an error — just stop silently
-      }
+      if (signal?.aborted) return
       callbacks.onError(
         err instanceof Error ? err : new Error('Network request failed'),
       )
       return
     }
 
-    // Handle HTTP error responses
     if (!response.ok) {
       let errorMessage: string
       try {
         const errorBody = await response.json()
         errorMessage =
-          errorBody?.error?.message || `HTTP ${response.status}: ${response.statusText}`
+          errorBody?.error?.message ||
+          `HTTP ${response.status}: ${response.statusText}`
       } catch {
         errorMessage = `HTTP ${response.status}: ${response.statusText}`
       }
 
-      if (response.status === 401 || response.status === 403) {
-        callbacks.onError(new Error('Invalid API key. Check your Anthropic key.'))
+      // Gemini returns 400 for invalid API keys with "API key not valid" message
+      if (
+        response.status === 400 &&
+        errorMessage.toLowerCase().includes('api key')
+      ) {
+        callbacks.onError(new Error('Invalid API key. Check your Gemini key.'))
+      } else if (response.status === 403) {
+        callbacks.onError(new Error('Invalid API key. Check your Gemini key.'))
       } else if (response.status === 429) {
         callbacks.onError(new Error('Rate limited. Try again in a moment.'))
       } else {
@@ -67,7 +78,6 @@ export class AnthropicAdapter extends BaseModelAdapter {
       return
     }
 
-    // Parse SSE stream
     const reader = response.body?.getReader()
     if (!reader) {
       callbacks.onError(new Error('No response body to read'))
@@ -85,9 +95,7 @@ export class AnthropicAdapter extends BaseModelAdapter {
 
         buffer += decoder.decode(value, { stream: true })
 
-        // Process complete lines from the buffer
         const lines = buffer.split('\n')
-        // Keep the last (potentially incomplete) line in the buffer
         buffer = lines.pop() || ''
 
         for (const line of lines) {
@@ -98,20 +106,16 @@ export class AnthropicAdapter extends BaseModelAdapter {
 
           try {
             const parsed = JSON.parse(data)
-
-            if (parsed.type === 'content_block_delta') {
-              const token = parsed.delta?.text
-              if (token) {
-                fullText += token
-                callbacks.onToken(token)
+            // Gemini SSE format: candidates[0].content.parts[0].text
+            const parts = parsed.candidates?.[0]?.content?.parts
+            if (parts) {
+              for (const part of parts) {
+                if (part.text) {
+                  fullText += part.text
+                  callbacks.onToken(part.text)
+                }
               }
-            } else if (parsed.type === 'error') {
-              callbacks.onError(
-                new Error(parsed.error?.message || 'Stream error from Anthropic'),
-              )
-              return
             }
-            // Ignore other event types (message_start, content_block_start, message_delta, message_stop)
           } catch {
             // Skip malformed JSON lines
           }
@@ -119,10 +123,7 @@ export class AnthropicAdapter extends BaseModelAdapter {
       }
     } catch (err) {
       if (signal?.aborted) {
-        // Abort mid-stream: preserve whatever text we got
-        if (fullText) {
-          callbacks.onComplete(fullText)
-        }
+        if (fullText) callbacks.onComplete(fullText)
         return
       }
       callbacks.onError(

@@ -1,6 +1,7 @@
 interface ResponseCardProps {
   providerId: string
   modelName: string
+  modelVariantLabel?: string
   modelColor: string
   response?: string
   isStreaming?: boolean
@@ -12,6 +13,7 @@ interface ResponseCardProps {
 
 export function ResponseCard({
   modelName,
+  modelVariantLabel,
   modelColor,
   response,
   isStreaming = false,
@@ -31,6 +33,12 @@ export function ResponseCard({
           />
           <span className="text-xs font-semibold tracking-wider text-terminal-light">
             {modelName.toUpperCase()}
+            {modelVariantLabel && (
+              <span className="font-normal text-terminal-muted">
+                {' · '}
+                {modelVariantLabel.toUpperCase()}
+              </span>
+            )}
           </span>
         </div>
         <div className="flex items-center gap-2">

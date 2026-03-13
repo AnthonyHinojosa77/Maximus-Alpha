@@ -18,7 +18,7 @@ export class OpenAIAdapter extends BaseModelAdapter {
     let response: Response
 
     try {
-      response = await fetch('/api/openai/v1/chat/completions', {
+      response = await fetch('/_px/a/v1/chat/completions', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -26,12 +26,13 @@ export class OpenAIAdapter extends BaseModelAdapter {
         },
         body: JSON.stringify({
           model: this.config.modelId,
-          max_tokens: 4096,
+          max_completion_tokens: 4096,
           stream: true,
           messages: [
             { role: 'system', content: this.config.systemPrompt },
             { role: 'user', content: userMessage },
           ],
+          ...this.config.extraBody,
         }),
         signal,
       })
